@@ -252,6 +252,7 @@
     <div>
       <div class="row"><span>Connection log</span></div>
       <pre id="log">(nothing yet)</pre>
+      <div class="hint" id="txInfo">Sent 0 packets.</div>
     </div>
     <div class="hint">Tap a servo's degree number to centre it. Tip: turn off Auto-Lock in iOS Settings while driving.</div>
   </div>
@@ -311,7 +312,7 @@
   // ---------------------------------------------------------------- write queue
   // Latest-wins per key, so a slow link never builds up stale drive commands.
   const queue = [];
-  let pumping = false;
+  let pumping = false, sent = 0;
 
   function send(text, key) {
     if (!ch) return;
@@ -328,9 +329,12 @@
     pumping = true;
     try {
       while (queue.length && ch) {
-        const bytes = enc.encode(queue.shift().text + '\n');
+        const { text } = queue.shift();
+        const bytes = enc.encode(text + '\n');
         if (ch.properties.writeWithoutResponse && ch.writeValueWithoutResponse) await ch.writeValueWithoutResponse(bytes);
         else await ch.writeValue(bytes);
+        sent++;
+        $('#txInfo').textContent = `Sent ${sent} packets. Last: ${text}`;
         await sleep(WRITE_GAP_MS);
       }
     } catch (e) {
@@ -646,7 +650,7 @@
   }, TICK_MS);
 
   // ---------------------------------------------------------------- boot
-  const VERSION = 'v4';
+  const VERSION = 'v5';
   $('#ver').textContent = VERSION;
   log('page ' + VERSION);
   if (!navigator.bluetooth || !isSecureContext) $('#banner').hidden = false;
