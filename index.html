@@ -122,6 +122,8 @@
   .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .row output { color: var(--mute); font-variant-numeric: tabular-nums; }
   input[type=range] { width: 100%; height: 36px; margin: 0; accent-color: var(--accent); }
+  input[type=checkbox] { width: 26px; height: 26px; margin: 0; accent-color: var(--accent); }
+  label.row { cursor: pointer; }
   .hint { color: var(--mute); font-size: 12px; }
   pre {
     margin: 0; padding: 8px 10px; max-height: 110px; overflow: auto;
@@ -185,6 +187,7 @@
   <div class="card">
     <div class="row"><h2>Settings</h2><button class="primary" id="closeSheet" style="min-width:0">Done</button></div>
     <div class="hint">The robot moves its eyes and servos by itself: fast driving looks angry, stopping after a drive looks happy, and idle time makes it sleepy. The emote buttons force a mood for a few seconds; Auto hands control back.</div>
+    <label class="row"><span>Show horn button (the buzzer only sounds at start-up otherwise)</span><input type="checkbox" id="hornToggle"></label>
     <div>
       <div class="row"><span>Servo 1 test</span><output id="s1Out">90°</output></div>
       <input type="range" id="s1" min="0" max="180" value="90">
@@ -228,6 +231,7 @@
   // ---------------------------------------------------------------- state
   let device = null, ch = null, userDisc = false, reconnecting = false, wakeLock = null;
   let jx = 0, jy = 0, horn = 0, speed = store.get('speed', 85);
+  let hornEnabled = store.get('horn', false);   // off by default: the buzzer is for start-up only
   const keys = new Set();
 
   // ---------------------------------------------------------------- ui helpers
@@ -494,7 +498,15 @@
 
   // ---------------------------------------------------------------- horn
   const hornBtn = $('#horn');
-  function setHorn(v) { horn = v; hornBtn.classList.toggle('on', !!v); }
+  function setHorn(v) { horn = hornEnabled ? v : 0; hornBtn.classList.toggle('on', !!horn); }
+  hornBtn.hidden = !hornEnabled;
+  $('#hornToggle').checked = hornEnabled;
+  $('#hornToggle').onchange = e => {
+    hornEnabled = e.target.checked;
+    store.set('horn', hornEnabled);
+    hornBtn.hidden = !hornEnabled;
+    setHorn(0);
+  };
   hornBtn.addEventListener('pointerdown', e => { hornBtn.setPointerCapture(e.pointerId); setHorn(1); });
   for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) {
     hornBtn.addEventListener(t, () => setHorn(0));
@@ -568,7 +580,7 @@
   }, TICK_MS);
 
   // ---------------------------------------------------------------- boot
-  const VERSION = 'v6';
+  const VERSION = 'v7';
   $('#ver').textContent = VERSION;
   log('page ' + VERSION);
   if (!navigator.bluetooth || !isSecureContext) $('#banner').hidden = false;
