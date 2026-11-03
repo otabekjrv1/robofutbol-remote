@@ -35,13 +35,7 @@
     -webkit-touch-callout: none;
   }
 
-  header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px var(--pad);
-    border-bottom: 1px solid var(--line);
-  }
+  header { display: flex; align-items: center; gap: 10px; padding: 6px var(--pad); border-bottom: 1px solid var(--line); }
   h1 { margin: 0; font-size: 14px; letter-spacing: .16em; text-transform: uppercase; white-space: nowrap; }
   h1 small { font-size: 10px; letter-spacing: .04em; color: var(--mute); font-weight: 400; }
   .status { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; color: var(--mute); font-size: 13px; }
@@ -53,53 +47,33 @@
   @keyframes pulse { 50% { opacity: .35; } }
 
   button {
-    font: inherit;
-    color: var(--ink);
+    font: inherit; color: var(--ink);
     background: var(--panel-2);
     border: 1px solid var(--line);
     border-radius: 12px;
-    min-height: 40px;
-    padding: 0 16px;
+    min-height: 40px; padding: 0 16px;
     touch-action: manipulation;
   }
   button:active { filter: brightness(1.25); }
   button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 700; min-width: 112px; }
   button.icon { width: 44px; padding: 0; display: grid; place-items: center; }
 
-  .banner {
-    margin: 10px var(--pad) 0;
-    padding: 10px 14px;
-    border: 1px solid var(--danger);
-    border-radius: 12px;
-    background: rgba(255, 92, 92, .08);
-    font-size: 13px;
-  }
+  .banner { margin: 10px var(--pad) 0; padding: 10px 14px; border: 1px solid var(--danger); border-radius: 12px; background: rgba(255, 92, 92, .08); font-size: 13px; }
 
   main {
-    flex: 1;
-    min-height: 0;
-    display: grid;
-    gap: 10px;
+    flex: 1; min-height: 0;
+    display: grid; gap: 10px;
     padding: 10px var(--pad) max(10px, env(safe-area-inset-bottom));
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.5fr) 96px minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
   }
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    padding: 12px;
-    min-height: 0;
-    min-width: 0;
-  }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 12px; min-height: 0; min-width: 0; }
 
-  /* drive area: sized by whatever room the panel has */
+  /* joystick: sized by the room the panel has */
   .drive { container-type: size; display: grid; place-items: center; }
-  .pane { width: 100%; height: 100%; display: grid; place-items: center; }
   .stick {
     position: relative;
-    width: min(100cqw, 100cqh);
-    height: min(100cqw, 100cqh);
+    width: min(100cqw, 100cqh); height: min(100cqw, 100cqh);
     border-radius: 50%;
     background: radial-gradient(circle, #1c2937 0, #0f1720 72%);
     border: 1px solid var(--line);
@@ -109,91 +83,64 @@
   .stick::before { left: 50%; top: 8%; bottom: 8%; width: 1px; }
   .stick::after  { top: 50%; left: 8%; right: 8%; height: 1px; }
   .knob {
-    position: absolute;
-    left: 50%; top: 50%;
-    width: 38%; height: 38%;
-    margin: -19% 0 0 -19%;
+    position: absolute; left: 50%; top: 50%;
+    width: 38%; height: 38%; margin: -19% 0 0 -19%;
     border-radius: 50%;
     background: var(--accent);
     box-shadow: 0 6px 20px rgba(0, 0, 0, .5), inset 0 -6px 12px rgba(0, 0, 0, .2);
     pointer-events: none;
   }
 
-  /* vertical sliders (servos and tank mode) */
+  /* speed slider */
+  .speed { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 0; }
+  .speed label { font-size: 11px; letter-spacing: .12em; color: var(--mute); }
+  .speed output { font-variant-numeric: tabular-nums; font-weight: 700; }
   .vs {
-    position: relative;
-    width: 64px;
-    flex: 1;
-    min-height: 80px;
-    border-radius: 32px;
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    touch-action: none;
-    overflow: hidden;
+    position: relative; width: 60px; flex: 1; min-height: 80px;
+    border-radius: 30px; background: var(--panel-2); border: 1px solid var(--line);
+    touch-action: none; overflow: hidden;
   }
   .vs .fill { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(52, 224, 161, .18); }
   .vs .thumb { position: absolute; left: 3px; right: 3px; height: 36px; border-radius: 18px; background: var(--accent); box-shadow: 0 3px 10px rgba(0, 0, 0, .4); }
-  .vs.bipolar::before { content: ""; position: absolute; left: 14px; right: 14px; top: 50%; height: 1px; background: var(--line); }
-  .col { display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 0; height: 100%; }
-  .col label { font-size: 12px; color: var(--mute); letter-spacing: .06em; text-transform: uppercase; }
-  .col .val { min-height: 32px; padding: 0 10px; font-size: 13px; font-variant-numeric: tabular-nums; }
-  .tank { display: flex; gap: 28px; justify-content: center; height: 100%; width: 100%; }
-  .tank .vs { width: 84px; }
 
+  /* right side */
   .side { display: flex; flex-direction: column; gap: 10px; }
   .horn {
-    min-height: 60px;
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: .14em;
-    border-radius: 16px;
-    touch-action: none;
+    min-height: 64px; font-size: 18px; font-weight: 700; letter-spacing: .14em;
+    border-radius: 16px; touch-action: none;
   }
   .horn.on { background: var(--amber); color: #2b1b00; border-color: transparent; }
-  .servos { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .emotes { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 8px; }
+  .emotes button { padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 13px; }
+  .emotes .em { font-size: 24px; line-height: 1; }
+  .emotes button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 700; }
 
   /* settings sheet */
-  .sheet {
-    position: fixed; inset: 0; z-index: 10;
-    display: flex; align-items: center; justify-content: center;
-    padding: 12px;
-    background: rgba(0, 0, 0, .62);
-  }
-  .card {
-    width: min(560px, 100%);
-    max-height: 100%;
-    overflow: auto;
-    display: flex; flex-direction: column; gap: 14px;
-    padding: 14px;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 16px;
-  }
+  .sheet { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; padding: 12px; background: rgba(0, 0, 0, .62); }
+  .card { width: min(560px, 100%); max-height: 100%; overflow: auto; display: flex; flex-direction: column; gap: 14px; padding: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; }
   .card h2 { margin: 0; font-size: 16px; }
   .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .row output { color: var(--mute); font-variant-numeric: tabular-nums; }
-  .seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; }
-  .seg button { padding: 0 6px; font-size: 14px; }
-  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 700; }
-  input[type=range] { width: 100%; height: 40px; margin: 0; accent-color: var(--accent); }
+  input[type=range] { width: 100%; height: 36px; margin: 0; accent-color: var(--accent); }
   .hint { color: var(--mute); font-size: 12px; }
   pre {
-    margin: 0; padding: 8px 10px; max-height: 120px; overflow: auto;
+    margin: 0; padding: 8px 10px; max-height: 110px; overflow: auto;
     background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
     font: 11px/1.45 ui-monospace, Menlo, monospace; color: var(--mute);
-    white-space: pre-wrap; word-break: break-word;
-    -webkit-user-select: text; user-select: text;
+    white-space: pre-wrap; word-break: break-word; -webkit-user-select: text; user-select: text;
   }
 
   @media (orientation: portrait) {
     main { grid-template-columns: 1fr; grid-template-rows: none; overflow-y: auto; }
-    .drive { height: min(92vw, 48vh); }
+    .drive { height: min(92vw, 46vh); }
+    .speed { min-height: 220px; }
     .side { min-height: 300px; }
   }
   @media (orientation: landscape) and (max-height: 480px) {
     header { padding-top: 4px; padding-bottom: 4px; }
     header button { min-height: 36px; }
-    .horn { min-height: 48px; font-size: 16px; }
+    .horn { min-height: 52px; font-size: 16px; }
+    .emotes .em { font-size: 20px; }
   }
 </style>
 </head>
@@ -214,22 +161,22 @@
 
 <main>
   <section class="panel drive">
-    <div class="pane" id="stickPane">
-      <div class="stick" id="stick"><div class="knob" id="knob"></div></div>
-    </div>
-    <div class="pane" id="tankPane" hidden>
-      <div class="tank">
-        <div class="col"><div class="vs bipolar" id="tl"><div class="thumb"></div></div><label>Left</label></div>
-        <div class="col"><div class="vs bipolar" id="tr"><div class="thumb"></div></div><label>Right</label></div>
-      </div>
-    </div>
+    <div class="stick" id="stick"><div class="knob" id="knob"></div></div>
+  </section>
+
+  <section class="panel speed">
+    <output id="speedOut">85%</output>
+    <div class="vs" id="speedSlider"><div class="fill"></div><div class="thumb"></div></div>
+    <label>SPEED</label>
   </section>
 
   <section class="panel side">
     <button class="horn" id="horn">HORN</button>
-    <div class="servos">
-      <div class="col"><button class="val" id="s1Val" aria-label="Centre servo 1">90°</button><div class="vs" id="s1"><div class="fill"></div><div class="thumb"></div></div><label>Servo 1</label></div>
-      <div class="col"><button class="val" id="s2Val" aria-label="Centre servo 2">90°</button><div class="vs" id="s2"><div class="fill"></div><div class="thumb"></div></div><label>Servo 2</label></div>
+    <div class="emotes" id="emotes">
+      <button data-e="1"><span class="em">😊</span>Happy</button>
+      <button data-e="2"><span class="em">😠</span>Angry</button>
+      <button data-e="4"><span class="em">😴</span>Sleep</button>
+      <button data-e="0"><span class="em">🤖</span>Auto</button>
     </div>
   </section>
 </main>
@@ -237,24 +184,20 @@
 <div class="sheet" id="sheet" hidden>
   <div class="card">
     <div class="row"><h2>Settings</h2><button class="primary" id="closeSheet" style="min-width:0">Done</button></div>
+    <div class="hint">The robot moves its eyes and servos by itself: fast driving looks angry, stopping after a drive looks happy, and idle time makes it sleepy. The emote buttons force a mood for a few seconds; Auto hands control back.</div>
     <div>
-      <div class="row"><span>Driving</span></div>
-      <div class="seg" id="modeSeg"><button>Joystick</button><button>Tank (two sliders)</button></div>
-    </div>
-    <div>
-      <div class="row"><span>Speed limit</span><output id="speedOut">85%</output></div>
-      <input type="range" id="speed" min="20" max="100" step="5" value="85">
-    </div>
-    <div>
-      <div class="row"><span>Eyes</span></div>
-      <div class="seg" id="moodSeg"><button>Normal</button><button>Happy</button><button>Angry</button><button>Sleepy</button></div>
+      <div class="row"><span>Servo 1 test</span><output id="s1Out">90°</output></div>
+      <input type="range" id="s1" min="0" max="180" value="90">
+      <div class="row"><span>Servo 2 test</span><output id="s2Out">90°</output></div>
+      <input type="range" id="s2" min="0" max="180" value="90">
+      <div class="hint">Moves the servo for 3 seconds, then the automatic pose takes over. Use it to find the angles for the constants at the top of the Arduino sketch.</div>
     </div>
     <div>
       <div class="row"><span>Connection log</span></div>
       <pre id="log">(nothing yet)</pre>
       <div class="hint" id="txInfo">Sent 0 packets.</div>
     </div>
-    <div class="hint">Tap a servo's degree number to centre it. Tip: turn off Auto-Lock in iOS Settings while driving.</div>
+    <div class="hint">Tip: turn off Auto-Lock in iOS Settings while driving.</div>
   </div>
 </div>
 
@@ -270,6 +213,7 @@
   const TICK_MS = 70;
   const WRITE_GAP_MS = 30;   // the module's UART is only 9600 baud
   const RECONNECT_TRIES = 6;
+  const EMOTE_MS = 6000;     // keep in step with the Arduino sketch
 
   const $ = s => document.querySelector(s);
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -283,9 +227,7 @@
 
   // ---------------------------------------------------------------- state
   let device = null, ch = null, userDisc = false, reconnecting = false, wakeLock = null;
-  let jx = 0, jy = 0, horn = 0;
-  let speed = store.get('speed', 85), mood = store.get('mood', 0), mode = store.get('mode', 'stick');
-  const servo = [90, 90];
+  let jx = 0, jy = 0, horn = 0, speed = store.get('speed', 85);
   const keys = new Set();
 
   // ---------------------------------------------------------------- ui helpers
@@ -301,12 +243,6 @@
   }
   function setButton() {
     $('#connect').textContent = reconnecting ? 'Cancel' : ch ? 'Disconnect' : device ? 'Reconnect' : 'Connect';
-  }
-  function bindSeg(el, current, onPick) {
-    const btns = [...el.querySelectorAll('button')];
-    const mark = i => btns.forEach((b, j) => b.setAttribute('aria-pressed', j === i));
-    btns.forEach((b, i) => b.onclick = () => { mark(i); onPick(i); });
-    mark(current);
   }
 
   // ---------------------------------------------------------------- write queue
@@ -349,6 +285,15 @@
   // ---------------------------------------------------------------- connection
   const shortId = u => typeof u === 'number' ? u.toString(16) : u.replace(/^0000(....)-0000-1000-8000-00805f9b34fb$/, '$1');
 
+  // Some browsers throw strings or odd objects, so never assume an Error.
+  function describe(e) {
+    if (e == null) return String(e);
+    if (typeof e === 'string') return e;
+    const s = [e.name, e.message].filter(Boolean).join(': ');
+    if (s) return s;
+    try { return typeof e + ' ' + (JSON.stringify(e) || String(e)); } catch (_) { return String(e); }
+  }
+
   // Connects GATT and picks the first writable characteristic of a known UART service.
   async function openLink() {
     log('GATT connect…');
@@ -365,15 +310,6 @@
       }
     }
     throw new Error('Connected, but this device has no UART service. Is it the right module?');
-  }
-
-  // Some browsers throw strings or odd objects, so never assume an Error.
-  function describe(e) {
-    if (e == null) return String(e);
-    if (typeof e === 'string') return e;
-    const s = [e.name, e.message].filter(Boolean).join(': ');
-    if (s) return s;
-    try { return typeof e + ' ' + (JSON.stringify(e) || String(e)); } catch (_) { return String(e); }
   }
 
   const SCANS = [
@@ -429,9 +365,6 @@
     setStatus('on', 'Connected · ' + (device.name || 'BLE module'));
     setButton();
     lastSent = '';
-    send('A' + servo[0], 'A');
-    send('B' + servo[1], 'B');
-    send('E' + mood, 'E');
     keepAwake();
   }
 
@@ -492,13 +425,13 @@
 
   // ---------------------------------------------------------------- vertical slider
   const THUMB = 36, EDGE = 3, PAD = THUMB + 2 * EDGE;
-  function vslider(el, { min, max, value, step = 0, spring = false, onInput = () => {} }) {
+  function vslider(el, { min, max, value, step = 0, onInput = () => {} }) {
     const thumb = el.querySelector('.thumb'), fill = el.querySelector('.fill');
     let v = value, pid = null;
     const render = () => {
       const t = (v - min) / (max - min);
       thumb.style.bottom = `calc((100% - ${PAD}px) * ${t} + ${EDGE}px)`;
-      if (fill) fill.style.height = `calc((100% - ${PAD}px) * ${t} + ${EDGE + THUMB}px)`;
+      fill.style.height = `calc((100% - ${PAD}px) * ${t} + ${EDGE + THUMB}px)`;
     };
     const set = nv => {
       nv = clamp(nv, min, max);
@@ -511,32 +444,23 @@
       const t = clamp((r.bottom - EDGE - THUMB / 2 - e.clientY) / (r.height - PAD), 0, 1);
       return min + t * (max - min);
     };
-    const release = () => { pid = null; if (spring) set(0); };
     el.addEventListener('pointerdown', e => {
       if (pid !== null) return;
       pid = e.pointerId; el.setPointerCapture(e.pointerId); set(fromEvent(e));
     });
     el.addEventListener('pointermove', e => { if (e.pointerId === pid) set(fromEvent(e)); });
     for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) {
-      el.addEventListener(t, e => { if (e.pointerId === pid) release(); });
+      el.addEventListener(t, e => { if (e.pointerId === pid) pid = null; });
     }
     render();
-    return { get value() { return v; }, set, release };
+    return { get value() { return v; }, set };
   }
 
-  // ---------------------------------------------------------------- servos
-  const servoUi = [['s1', 'A', 0], ['s2', 'B', 1]].map(([id, cmd, idx]) => {
-    const s = vslider($('#' + id), {
-      min: 0, max: 180, value: 90, step: 1,
-      onInput: v => { servo[idx] = v; $('#' + id + 'Val').textContent = v + '°'; send(cmd + v, cmd); },
-    });
-    $('#' + id + 'Val').onclick = () => s.set(90);
-    return s;
+  vslider($('#speedSlider'), {
+    min: 20, max: 100, value: speed, step: 5,
+    onInput: v => { speed = v; $('#speedOut').textContent = v + '%'; store.set('speed', v); },
   });
-
-  // ---------------------------------------------------------------- tank sliders
-  const tankL = vslider($('#tl'), { min: -1, max: 1, value: 0, spring: true });
-  const tankR = vslider($('#tr'), { min: -1, max: 1, value: 0, spring: true });
+  $('#speedOut').textContent = speed + '%';
 
   // ---------------------------------------------------------------- joystick
   const stick = $('#stick'), knob = $('#knob');
@@ -577,28 +501,31 @@
   }
   hornBtn.addEventListener('contextmenu', e => e.preventDefault());
 
+  // ---------------------------------------------------------------- emotes
+  // The robot picks moods by itself; these force one for a few seconds. 0 = back to auto.
+  const emoteBtns = [...document.querySelectorAll('#emotes button')];
+  let emoteTimer = null;
+  emoteBtns.forEach(b => b.onclick = () => {
+    const e = +b.dataset.e;
+    send('E' + e, 'E');
+    clearTimeout(emoteTimer);
+    emoteBtns.forEach(x => x.setAttribute('aria-pressed', e !== 0 && x === b));
+    if (e !== 0) emoteTimer = setTimeout(() => emoteBtns.forEach(x => x.setAttribute('aria-pressed', false)), EMOTE_MS);
+  });
+
   // ---------------------------------------------------------------- settings
   const sheet = $('#sheet');
   $('#gear').onclick = () => { sheet.hidden = false; };
   $('#closeSheet').onclick = () => { sheet.hidden = true; };
   sheet.addEventListener('pointerdown', e => { if (e.target === sheet) sheet.hidden = true; });
 
-  function applyMode() {
-    $('#stickPane').hidden = mode !== 'stick';
-    $('#tankPane').hidden = mode !== 'tank';
-    resetInputs();
-  }
-  bindSeg($('#modeSeg'), mode === 'tank' ? 1 : 0, i => { mode = i ? 'tank' : 'stick'; store.set('mode', mode); applyMode(); });
-
-  $('#speed').value = speed;
-  $('#speedOut').textContent = speed + '%';
-  $('#speed').oninput = e => {
-    speed = +e.target.value;
-    $('#speedOut').textContent = speed + '%';
-    store.set('speed', speed);
-  };
-
-  bindSeg($('#moodSeg'), mood, i => { mood = i; store.set('mood', i); send('E' + i, 'E'); });
+  [['s1', 'A'], ['s2', 'B']].forEach(([id, cmd]) => {
+    const el = $('#' + id);
+    el.addEventListener('input', () => {
+      $('#' + id + 'Out').textContent = el.value + '°';
+      send(cmd + el.value, cmd);
+    });
+  });
 
   // ---------------------------------------------------------------- keyboard (desktop testing)
   const KEYMAP = { arrowup: 'u', w: 'u', arrowdown: 'd', s: 'd', arrowleft: 'l', a: 'l', arrowright: 'r', d: 'r' };
@@ -611,28 +538,19 @@
     if (e.code === 'Space') { setHorn(0); return; }
     keys.delete(KEYMAP[e.key.toLowerCase()]);
   });
-  function resetInputs() { keys.clear(); releaseStick(); tankL.release(); tankR.release(); setHorn(0); }
+  function resetInputs() { keys.clear(); releaseStick(); setHorn(0); }
   addEventListener('blur', resetInputs);
 
   // ---------------------------------------------------------------- drive loop
-  const dead = v => Math.abs(v) < 0.08 ? 0 : v;
-
-  // Joystick: arcade mix, left = y + x and right = y - x, scaled so neither side exceeds 1.
-  function stickMix(x, y) {
-    x = clamp(x, -1, 1); y = clamp(y, -1, 1);
-    if (Math.hypot(x, y) < 0.08) x = y = 0;
-    const l = y + x, r = y - x;
-    const m = Math.max(1, Math.abs(l), Math.abs(r));
-    return [l / m, r / m];
-  }
-
+  // Arcade mix: left = y + x, right = y - x, scaled so neither side exceeds 1.
   function wheels() {
     const kx = (keys.has('r') ? 1 : 0) - (keys.has('l') ? 1 : 0);
     const ky = (keys.has('u') ? 1 : 0) - (keys.has('d') ? 1 : 0);
-    let l, r;
-    if (mode === 'tank' && !kx && !ky) [l, r] = [dead(tankL.value), dead(tankR.value)];
-    else [l, r] = stickMix(jx + kx, jy + ky);
-    const k = 255 * speed / 100;
+    let x = clamp(jx + kx, -1, 1), y = clamp(jy + ky, -1, 1);
+    if (Math.hypot(x, y) < 0.08) x = y = 0;
+    const l = y + x, r = y - x;
+    const m = Math.max(1, Math.abs(l), Math.abs(r));
+    const k = 255 * speed / 100 / m;
     return { l: Math.round(l * k), r: Math.round(r * k) };
   }
 
@@ -650,11 +568,10 @@
   }, TICK_MS);
 
   // ---------------------------------------------------------------- boot
-  const VERSION = 'v5';
+  const VERSION = 'v6';
   $('#ver').textContent = VERSION;
   log('page ' + VERSION);
   if (!navigator.bluetooth || !isSecureContext) $('#banner').hidden = false;
-  applyMode();
   setButton();
 })();
 </script>
