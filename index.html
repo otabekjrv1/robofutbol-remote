@@ -260,7 +260,9 @@
   'use strict';
 
   // The module is an HM-10 style UART (FFE0). The others cover common clones.
-  const UART_SERVICES = [0xFFE0, '6e400001-b5a0-f393-e0a9-e50e24dcca9e', 0xFFF0];
+  // Full-length strings only: Bluefy rejects numeric UUIDs ("Request payload could not be parsed").
+  const FFE0 = '0000ffe0-0000-1000-8000-00805f9b34fb';
+  const UART_SERVICES = [FFE0, '6e400001-b5a0-f393-e0a9-e50e24dcca9e', '0000fff0-0000-1000-8000-00805f9b34fb'];
   const HEARTBEAT_MS = 250;
   const TICK_MS = 70;
   const WRITE_GAP_MS = 30;   // the module's UART is only 9600 baud
@@ -368,11 +370,11 @@
     try { return typeof e + ' ' + (JSON.stringify(e) || String(e)); } catch (_) { return String(e); }
   }
 
-  const fullId = u => typeof u === 'number' ? `0000${u.toString(16).padStart(4, '0')}-0000-1000-8000-00805f9b34fb` : u;
   const SCANS = [
-    ['all devices, all UART services', { acceptAllDevices: true, optionalServices: UART_SERVICES.map(fullId) }],
-    ['all devices, FFE0 only',         { acceptAllDevices: true, optionalServices: [0xFFE0] }],
-    ['devices advertising FFE0',       { filters: [{ services: [0xFFE0] }] }],
+    ['all devices, all UART services', { acceptAllDevices: true, optionalServices: UART_SERVICES }],
+    ['all devices, FFE0 only',         { acceptAllDevices: true, optionalServices: [FFE0] }],
+    ['devices advertising FFE0',       { filters: [{ services: [FFE0] }] }],
+    ['all devices, numeric FFE0',      { acceptAllDevices: true, optionalServices: [0xFFE0] }],
   ];
 
   // If the browser rejects the scan instantly it is a settings problem, so try the next
