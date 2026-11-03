@@ -331,8 +331,8 @@
       }
     } catch (e) {
       queue.length = 0;
-      log('write failed: ' + (e.message || e.name));
-      setStatus('err', 'Write failed: ' + (e.message || e.name));
+      log('write failed: ' + describe(e));
+      setStatus('err', 'Write failed: ' + describe(e));
     } finally {
       pumping = false;
     }
@@ -353,32 +353,66 @@
         const c = chars.find(c => c.properties.writeWithoutResponse || c.properties.write);
         if (c) { ch = c; log('using characteristic ' + shortId(c.uuid)); return; }
       } catch (e) {
-        log(`service ${shortId(s)}: ${e.name}`);
+        log(`service ${shortId(s)}: ${describe(e)}`);
       }
     }
     throw new Error('Connected, but this device has no UART service. Is it the right module?');
   }
 
+  // Some browsers throw strings or odd objects, so never assume an Error.
+  function describe(e) {
+    if (e == null) return String(e);
+    if (typeof e === 'string') return e;
+    const s = [e.name, e.message].filter(Boolean).join(': ');
+    if (s) return s;
+    try { return typeof e + ' ' + (JSON.stringify(e) || String(e)); } catch (_) { return String(e); }
+  }
+
+  const fullId = u => typeof u === 'number' ? `0000${u.toString(16).padStart(4, '0')}-0000-1000-8000-00805f9b34fb` : u;
+  const SCANS = [
+    ['all devices, all UART services', { acceptAllDevices: true, optionalServices: UART_SERVICES.map(fullId) }],
+    ['all devices, FFE0 only',         { acceptAllDevices: true, optionalServices: [0xFFE0] }],
+    ['devices advertising FFE0',       { filters: [{ services: [0xFFE0] }] }],
+  ];
+
+  // If the browser rejects the scan instantly it is a settings problem, so try the next
+  // style. A slow rejection means the person closed the list, so stop.
+  async function chooseDevice() {
+    for (const [label, opts] of SCANS) {
+      const t0 = performance.now();
+      log('scan: ' + label);
+      try {
+        return await navigator.bluetooth.requestDevice(opts);
+      } catch (e) {
+        const ms = Math.round(performance.now() - t0);
+        log(`  rejected after ${ms} ms: ${describe(e)}`);
+        if (ms > 800) throw e;
+      }
+    }
+    throw new Error('The browser rejected every scan style');
+  }
+
   async function connect() {
     try {
-      setStatus('busy', 'Connecting…');
+      setStatus('busy', 'Scanning…');
       if (!device) {
-        log('scanning…');
-        device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: UART_SERVICES });
+        device = await chooseDevice();
         device.addEventListener('gattserverdisconnected', onDisconnected);
         log('chose ' + (device.name || '(no name)'));
       }
+      setStatus('busy', 'Connecting…');
       await openLink();
       onConnected();
     } catch (e) {
-      const cancelled = e.name === 'NotFoundError' && /chosen|cancel/i.test(e.message);
-      log('error: ' + e.name + ' ' + e.message);
+      const msg = describe(e);
+      const cancelled = /cancel|chosen|dismiss/i.test(msg);
+      log('error: ' + msg);
       if (device) {
         device.removeEventListener('gattserverdisconnected', onDisconnected);
         try { device.gatt.disconnect(); } catch (_) {}
       }
       device = null; ch = null;
-      setStatus(cancelled ? 'off' : 'err', cancelled ? 'No device chosen' : (e.message || e.name));
+      setStatus(cancelled ? 'off' : 'err', cancelled ? 'No device chosen' : msg);
       setButton();
     }
   }
@@ -404,7 +438,7 @@
         onConnected();
         return;
       } catch (e) {
-        log('reconnect failed: ' + (e.message || e.name));
+        log('reconnect failed: ' + describe(e));
       }
     }
     if (reconnecting) setStatus('err', 'Link lost. Tap Reconnect');
