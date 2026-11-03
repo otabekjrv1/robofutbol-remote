@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e13">
+<title>Robofutbol Remote</title>
+<style>
+  :root {
+    --bg: #0a0e13;
+    --panel: #111821;
+    --panel-2: #18232f;
+    --line: #243244;
+    --ink: #e9eff6;
+    --mute: #8a9bad;
+    --accent: #34e0a1;
+    --accent-ink: #04261a;
+    --danger: #ff5c5c;
+    --amber: #ffb84d;
+    --pad: max(14px, env(safe-area-inset-left), env(safe-area-inset-right));
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    overscroll-behavior: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px var(--pad);
+    border-bottom: 1px solid var(--line);
+  }
+  h1 {
+    margin: 0;
+    font-size: 14px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .status {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--mute);
+    font-size: 13px;
+  }
+  .status span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #4a5668; flex: none; }
+  .status[data-s="on"] .dot   { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+  .status[data-s="busy"] .dot { background: var(--amber); }
+  .status[data-s="err"] .dot  { background: var(--danger); }
+
+  button {
+    font: inherit;
+    color: var(--ink);
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    min-height: 44px;
+    padding: 0 16px;
+    touch-action: manipulation;
+  }
+  button:active { filter: brightness(1.25); }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 700; }
+
+  .banner {
+    margin: 12px var(--pad) 0;
+    padding: 12px 14px;
+    border: 1px solid var(--danger);
+    border-radius: 12px;
+    background: rgba(255, 92, 92, .08);
+  }
+  .banner[hidden] { display: none; }
+
+  main {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    gap: 12px;
+    padding: 12px var(--pad) max(12px, env(safe-area-inset-bottom));
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+  main { overflow-y: auto; align-content: start; }
+  @media (orientation: portrait) { main { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+  }
+  .panel h2 {
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--mute);
+    font-weight: 600;
+  }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .row output { font-variant-numeric: tabular-nums; color: var(--mute); }
+
+  /* joystick */
+  .drive { justify-content: center; align-items: center; }
+  .stick {
+    position: relative;
+    aspect-ratio: 1;
+    width: min(100%, 70vw);
+    border-radius: 50%;
+    background: radial-gradient(circle, #1c2937 0, #0f1720 72%);
+    border: 1px solid var(--line);
+    touch-action: none;
+  }
+  @media (orientation: landscape) {
+    .stick { width: min(100%, calc(100vh - 118px)); width: min(100%, calc(100dvh - 118px)); }
+  }
+  .stick::before, .stick::after { content: ""; position: absolute; background: var(--line); }
+  .stick::before { left: 50%; top: 8%; bottom: 8%; width: 1px; }
+  .stick::after  { top: 50%; left: 8%; right: 8%; height: 1px; }
+  .knob {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 38%; height: 38%;
+    margin: -19% 0 0 -19%;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .5), inset 0 -6px 12px rgba(0, 0, 0, .2);
+    pointer-events: none;
+  }
+
+  /* controls */
+  .horn {
+    min-height: 72px;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    touch-action: none;
+    border-radius: 16px;
+  }
+  .horn.on { background: var(--amber); color: #2b1b00; border-color: transparent; }
+  input[type=range] { width: 100%; height: 44px; margin: 0; accent-color: var(--accent); }
+  .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .seg button { padding: 0; font-size: 13px; }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 700; }
+  .presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .presets button { min-height: 38px; padding: 0; font-size: 13px; }
+  .servo { display: flex; flex-direction: column; gap: 6px; }
+  .readout { font-variant-numeric: tabular-nums; color: var(--mute); font-size: 13px; }
+
+  /* phone in landscape: everything has to fit in roughly 330px of height */
+  @media (orientation: landscape) and (max-height: 480px) {
+    header { padding-top: 4px; padding-bottom: 4px; }
+    header button { min-height: 38px; }
+    main { gap: 8px; padding-top: 8px; padding-bottom: 8px; }
+    .panel { padding: 10px; gap: 8px; }
+    .horn { min-height: 52px; font-size: 16px; }
+    input[type=range] { height: 34px; }
+    .seg button { min-height: 38px; }
+    .presets button { min-height: 32px; }
+    .servo { gap: 4px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Robofutbol</h1>
+  <div class="status" id="status" data-s="off"><i class="dot"></i><span id="statusText">Not connected</span></div>
+  <button class="primary" id="connect">Connect</button>
+</header>
+
+<div class="banner" id="banner" hidden>
+  This browser has no Web Bluetooth. On iPhone open this page in <b>Bluefy</b>; on Android or desktop use Chrome. The page must be served over HTTPS.
+</div>
+
+<main>
+  <section class="panel drive">
+    <div class="stick" id="stick"><div class="knob" id="knob"></div></div>
+  </section>
+
+  <section class="panel">
+    <h2>Controls</h2>
+    <button class="horn" id="horn">HORN</button>
+    <div>
+      <div class="row"><span>Speed limit</span><output id="speedOut">85%</output></div>
+      <input type="range" id="speed" min="20" max="100" step="5" value="85">
+    </div>
+    <div>
+      <div class="row"><span>Eyes</span></div>
+      <div class="seg" id="mood">
+        <button aria-pressed="true">Normal</button>
+        <button aria-pressed="false">Happy</button>
+        <button aria-pressed="false">Angry</button>
+        <button aria-pressed="false">Sleepy</button>
+      </div>
+    </div>
+    <div class="readout" id="readout">L 0 &nbsp; R 0</div>
+  </section>
+
+  <section class="panel">
+    <h2>Servos</h2>
+    <div class="servo">
+      <div class="row"><span>Servo 1</span><output id="s1Out">90°</output></div>
+      <input type="range" id="s1" min="0" max="180" value="90">
+      <div class="presets" data-for="s1"><button data-v="0">0°</button><button data-v="90">90°</button><button data-v="180">180°</button></div>
+    </div>
+    <div class="servo">
+      <div class="row"><span>Servo 2</span><output id="s2Out">90°</output></div>
+      <input type="range" id="s2" min="0" max="180" value="90">
+      <div class="presets" data-for="s2"><button data-v="0">0°</button><button data-v="90">90°</button><button data-v="180">180°</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  const SERVICE = 0xFFE0;   // HM-10 style UART service
+  const CHAR = 0xFFE1;
+  const HEARTBEAT_MS = 250;
+  const TICK_MS = 70;
+  const WRITE_GAP_MS = 30;  // the module's UART is only 9600 baud
+
+  const $ = s => document.querySelector(s);
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const enc = new TextEncoder();
+
+  // ---------------------------------------------------------------- state
+  let device = null, ch = null, userDisc = false, wakeLock = null;
+  let jx = 0, jy = 0, horn = 0, speed = 85, mood = 0;
+  const servo = [90, 90];
+  const keys = new Set();
+
+  // ---------------------------------------------------------------- status ui
+  function setStatus(kind, text) {
+    $('#status').dataset.s = kind;
+    $('#statusText').textContent = text;
+  }
+  function setButton() {
+    $('#connect').textContent = ch ? 'Disconnect' : (device ? 'Reconnect' : 'Connect');
+  }
+
+  // ---------------------------------------------------------------- write queue
+  // Latest-wins per key, so a slow link never builds up stale drive commands.
+  const queue = [];
+  let pumping = false;
+
+  function send(text, key) {
+    if (!ch) return;
+    if (key) {
+      const i = queue.findIndex(q => q.key === key);
+      if (i >= 0) queue.splice(i, 1);
+    }
+    queue.push({ text, key });
+    pump();
+  }
+
+  async function pump() {
+    if (pumping) return;
+    pumping = true;
+    try {
+      while (queue.length && ch) {
+        const bytes = enc.encode(queue.shift().text + '\n');
+        if (ch.writeValueWithoutResponse) await ch.writeValueWithoutResponse(bytes);
+        else await ch.writeValue(bytes);
+        await sleep(WRITE_GAP_MS);
+      }
+    } catch (e) {
+      queue.length = 0;
+      setStatus('err', 'Write failed: ' + (e.message || e.name));
+    } finally {
+      pumping = false;
+    }
+  }
+
+  // ---------------------------------------------------------------- connection
+  async function connect() {
+    try {
+      setStatus('busy', 'Connecting…');
+      if (!device) {
+        device = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [SERVICE],
+        });
+        device.addEventListener('gattserverdisconnected', onDisconnected);
+      }
+      const server = await device.gatt.connect();
+      const svc = await server.getPrimaryService(SERVICE);
+      ch = await svc.getCharacteristic(CHAR);
+      onConnected();
+    } catch (e) {
+      if (device) { try { device.gatt.disconnect(); } catch (_) {} }
+      device = null; ch = null;
+      setStatus(e.name === 'NotFoundError' ? 'off' : 'err',
+                e.name === 'NotFoundError' ? 'No device chosen' : (e.message || e.name));
+      setButton();
+    }
+  }
+
+  function onConnected() {
+    setStatus('on', 'Connected · ' + (device.name || 'BLE module'));
+    setButton();
+    lastSent = '';
+    send('A' + servo[0], 'A');
+    send('B' + servo[1], 'B');
+    send('E' + mood, 'E');
+    keepAwake();
+  }
+
+  function onDisconnected() {
+    ch = null;
+    queue.length = 0;
+    if (userDisc) {
+      device = null; userDisc = false;
+      setStatus('off', 'Disconnected');
+    } else {
+      setStatus('err', 'Link lost. Tap Reconnect');
+    }
+    setButton();
+  }
+
+  $('#connect').onclick = () => {
+    if (ch) { userDisc = true; device.gatt.disconnect(); }
+    else connect();
+  };
+
+  async function keepAwake() {
+    try { wakeLock = await navigator.wakeLock.request('screen'); } catch (_) {}
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) resetInputs();
+    else if (ch) keepAwake();
+  });
+
+  // ---------------------------------------------------------------- joystick
+  const stick = $('#stick'), knob = $('#knob');
+  let stickPointer = null;
+
+  function moveStick(e) {
+    const r = stick.getBoundingClientRect();
+    const reach = r.width * 0.31;            // stick radius minus knob radius
+    let dx = e.clientX - (r.left + r.width / 2);
+    let dy = e.clientY - (r.top + r.height / 2);
+    const d = Math.hypot(dx, dy);
+    if (d > reach) { dx *= reach / d; dy *= reach / d; }
+    knob.style.transform = `translate(${dx}px, ${dy}px)`;
+    jx = dx / reach;
+    jy = -dy / reach;
+  }
+  function releaseStick() {
+    stickPointer = null; jx = jy = 0;
+    knob.style.transform = '';
+  }
+  stick.addEventListener('pointerdown', e => {
+    if (stickPointer !== null) return;
+    stickPointer = e.pointerId;
+    stick.setPointerCapture(e.pointerId);
+    moveStick(e);
+  });
+  stick.addEventListener('pointermove', e => { if (e.pointerId === stickPointer) moveStick(e); });
+  for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+    stick.addEventListener(t, e => { if (e.pointerId === stickPointer) releaseStick(); });
+  }
+
+  // ---------------------------------------------------------------- horn
+  const hornBtn = $('#horn');
+  function setHorn(v) { horn = v; hornBtn.classList.toggle('on', !!v); }
+  hornBtn.addEventListener('pointerdown', e => { hornBtn.setPointerCapture(e.pointerId); setHorn(1); });
+  for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+    hornBtn.addEventListener(t, () => setHorn(0));
+  }
+  hornBtn.addEventListener('contextmenu', e => e.preventDefault());
+
+  // ---------------------------------------------------------------- speed, eyes, servos
+  $('#speed').oninput = e => {
+    speed = +e.target.value;
+    $('#speedOut').textContent = speed + '%';
+  };
+
+  const moodBtns = [...document.querySelectorAll('#mood button')];
+  moodBtns.forEach((b, i) => b.onclick = () => {
+    mood = i;
+    moodBtns.forEach((x, j) => x.setAttribute('aria-pressed', j === i));
+    send('E' + i, 'E');
+  });
+
+  [['s1', 'A', 0], ['s2', 'B', 1]].forEach(([id, cmd, idx]) => {
+    const el = $('#' + id), out = $('#' + id + 'Out');
+    el.addEventListener('input', () => {
+      servo[idx] = +el.value;
+      out.textContent = el.value + '°';
+      send(cmd + el.value, cmd);
+    });
+    document.querySelectorAll(`.presets[data-for="${id}"] button`).forEach(b => b.onclick = () => {
+      el.value = b.dataset.v;
+      el.dispatchEvent(new Event('input'));
+    });
+  });
+
+  // ---------------------------------------------------------------- keyboard (desktop testing)
+  const KEYMAP = { arrowup: 'u', w: 'u', arrowdown: 'd', s: 'd', arrowleft: 'l', a: 'l', arrowright: 'r', d: 'r' };
+  addEventListener('keydown', e => {
+    if (e.code === 'Space') { setHorn(1); e.preventDefault(); return; }
+    const k = KEYMAP[e.key.toLowerCase()];
+    if (k) { keys.add(k); e.preventDefault(); }
+  });
+  addEventListener('keyup', e => {
+    if (e.code === 'Space') { setHorn(0); return; }
+    keys.delete(KEYMAP[e.key.toLowerCase()]);
+  });
+  function resetInputs() { keys.clear(); releaseStick(); setHorn(0); }
+  addEventListener('blur', resetInputs);
+
+  // ---------------------------------------------------------------- drive loop
+  // Arcade mix: left = y + x, right = y - x, scaled so neither side exceeds 1.
+  function mix() {
+    const kx = (keys.has('r') ? 1 : 0) - (keys.has('l') ? 1 : 0);
+    const ky = (keys.has('u') ? 1 : 0) - (keys.has('d') ? 1 : 0);
+    let x = clamp(jx + kx, -1, 1), y = clamp(jy + ky, -1, 1);
+    if (Math.hypot(x, y) < 0.08) x = y = 0;
+    let l = y + x, r = y - x;
+    const m = Math.max(1, Math.abs(l), Math.abs(r));
+    const k = 255 * speed / 100 / m;
+    return { l: Math.round(l * k), r: Math.round(r * k) };
+  }
+
+  // Also the heartbeat: the robot brakes if it hears nothing for ~0.7 s.
+  let lastSent = '', lastSentAt = 0;
+  setInterval(() => {
+    const { l, r } = mix();
+    $('#readout').innerHTML = `L ${l} &nbsp; R ${r}`;
+    if (!ch) return;
+    const msg = `M${l},${r},${horn}`;
+    const now = performance.now();
+    if (msg !== lastSent || now - lastSentAt > HEARTBEAT_MS) {
+      lastSent = msg; lastSentAt = now;
+      send(msg, 'M');
+    }
+  }, TICK_MS);
+
+  // ---------------------------------------------------------------- boot
+  if (!navigator.bluetooth || !isSecureContext) $('#banner').hidden = false;
+  setButton();
+})();
+</script>
+</body>
+</html>
