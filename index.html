@@ -33,6 +33,7 @@
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
+    touch-action: manipulation;
   }
 
   header { display: flex; align-items: center; gap: 10px; padding: 6px var(--pad); border-bottom: 1px solid var(--line); }
@@ -54,66 +55,70 @@
     min-height: 40px; padding: 0 16px;
     touch-action: manipulation;
   }
-  button:active { filter: brightness(1.25); }
+  button:active { filter: brightness(1.3); }
   button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 700; min-width: 112px; }
   button.icon { width: 44px; padding: 0; display: grid; place-items: center; }
 
   .banner { margin: 10px var(--pad) 0; padding: 10px 14px; border: 1px solid var(--danger); border-radius: 12px; background: rgba(255, 92, 92, .08); font-size: 13px; }
 
+  /* three big controls: steering | speed | throttle */
   main {
     flex: 1; min-height: 0;
     display: grid; gap: 10px;
     padding: 10px var(--pad) max(10px, env(safe-area-inset-bottom));
-    grid-template-columns: minmax(0, 1.5fr) 96px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 132px minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr);
   }
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 12px; min-height: 0; min-width: 0; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; min-height: 0; min-width: 0; }
 
-  /* joystick: sized by the room the panel has */
-  .drive { container-type: size; display: grid; place-items: center; }
-  .stick {
-    position: relative;
-    width: min(100cqw, 100cqh); height: min(100cqw, 100cqh);
-    border-radius: 50%;
-    background: radial-gradient(circle, #1c2937 0, #0f1720 72%);
-    border: 1px solid var(--line);
-    touch-action: none;
-  }
-  .stick::before, .stick::after { content: ""; position: absolute; background: var(--line); }
-  .stick::before { left: 50%; top: 8%; bottom: 8%; width: 1px; }
-  .stick::after  { top: 50%; left: 8%; right: 8%; height: 1px; }
+  /* axis pads: the WHOLE panel is the touch area, the knob follows the finger on one axis only */
+  .pad { position: relative; touch-action: none; overflow: hidden; }
+  .pad .rail { position: absolute; background: var(--line); border-radius: 4px; }
+  .pad.x .rail { left: 7%; right: 7%; top: 50%; height: 8px; margin-top: -4px; }
+  .pad.y .rail { top: 7%; bottom: 7%; left: 50%; width: 8px; margin-left: -4px; }
+  .pad .mid { position: absolute; background: var(--mute); opacity: .55; }
+  .pad.x .mid { left: 50%; top: 30%; bottom: 30%; width: 2px; margin-left: -1px; }
+  .pad.y .mid { top: 50%; left: 30%; right: 30%; height: 2px; margin-top: -1px; }
+  .pad .lbl { position: absolute; font-size: 11px; letter-spacing: .14em; color: var(--mute); pointer-events: none; }
+  .pad.x .lbl { bottom: 12px; }
+  .pad.x .lbl.l { left: 14px; }
+  .pad.x .lbl.r { right: 14px; }
+  .pad.y .lbl { left: 0; right: 0; text-align: center; }
+  .pad.y .lbl.t { top: 12px; }
+  .pad.y .lbl.b { bottom: 12px; }
   .knob {
     position: absolute; left: 50%; top: 50%;
-    width: 38%; height: 38%; margin: -19% 0 0 -19%;
+    width: 64px; height: 64px; margin: -32px 0 0 -32px;
     border-radius: 50%;
     background: var(--accent);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, .5), inset 0 -6px 12px rgba(0, 0, 0, .2);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .5), inset 0 -6px 12px rgba(0, 0, 0, .2);
+    transition: left .12s ease-out, top .12s ease-out;
     pointer-events: none;
   }
+  .pad.active .knob { transition: none; background: #6bf0c0; }
+  .pad.active { border-color: var(--accent); }
 
-  /* speed slider */
-  .speed { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 0; }
-  .speed label { font-size: 11px; letter-spacing: .12em; color: var(--mute); }
-  .speed output { font-variant-numeric: tabular-nums; font-weight: 700; }
-  .vs {
-    position: relative; width: 60px; flex: 1; min-height: 80px;
-    border-radius: 30px; background: var(--panel-2); border: 1px solid var(--line);
-    touch-action: none; overflow: hidden;
+  /* speed: the whole centre column answers to touch */
+  .speed {
+    touch-action: none;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 10px 0;
   }
-  .vs .fill { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(52, 224, 161, .18); }
-  .vs .thumb { position: absolute; left: 3px; right: 3px; height: 36px; border-radius: 18px; background: var(--accent); box-shadow: 0 3px 10px rgba(0, 0, 0, .4); }
+  .sp-head { display: flex; flex-direction: column; align-items: center; line-height: 1.15; }
+  .speed output { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .speed label { font-size: 10px; letter-spacing: .14em; color: var(--mute); }
+  .steps { display: flex; gap: 6px; width: 100%; padding: 0 8px; }
+  .speed .step { flex: 1; min-height: 44px; padding: 0; font-size: 16px; }
+  .track {
+    position: relative; flex: 1; width: 84px; min-height: 90px;
+    border-radius: 42px; background: var(--panel-2); border: 1px solid var(--line);
+    overflow: hidden; pointer-events: none;
+  }
+  .track .fill { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(52, 224, 161, .2); }
+  .track .thumb { position: absolute; left: 4px; right: 4px; height: 56px; border-radius: 28px; background: var(--accent); box-shadow: 0 3px 10px rgba(0, 0, 0, .4); }
+  .speed.active { border-color: var(--accent); }
 
-  /* right side */
-  .side { display: flex; flex-direction: column; gap: 10px; }
-  .horn {
-    min-height: 64px; font-size: 18px; font-weight: 700; letter-spacing: .14em;
-    border-radius: 16px; touch-action: none;
-  }
-  .horn.on { background: var(--amber); color: #2b1b00; border-color: transparent; }
-  .emotes { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 8px; }
-  .emotes button { padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 13px; }
-  .emotes .em { font-size: 24px; line-height: 1; }
-  .emotes button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 700; }
+  #rotate { display: none; flex: 1; place-items: center; text-align: center; padding: 24px; color: var(--mute); }
 
   /* settings sheet */
   .sheet { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; padding: 12px; background: rgba(0, 0, 0, .62); }
@@ -122,8 +127,6 @@
   .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .row output { color: var(--mute); font-variant-numeric: tabular-nums; }
   input[type=range] { width: 100%; height: 36px; margin: 0; accent-color: var(--accent); }
-  input[type=checkbox] { width: 26px; height: 26px; margin: 0; accent-color: var(--accent); }
-  label.row { cursor: pointer; }
   .hint { color: var(--mute); font-size: 12px; }
   pre {
     margin: 0; padding: 8px 10px; max-height: 110px; overflow: auto;
@@ -133,16 +136,12 @@
   }
 
   @media (orientation: portrait) {
-    main { grid-template-columns: 1fr; grid-template-rows: none; overflow-y: auto; }
-    .drive { height: min(92vw, 46vh); }
-    .speed { min-height: 220px; }
-    .side { min-height: 300px; }
+    main { display: none; }
+    #rotate { display: grid; }
   }
   @media (orientation: landscape) and (max-height: 480px) {
     header { padding-top: 4px; padding-bottom: 4px; }
     header button { min-height: 36px; }
-    .horn { min-height: 52px; font-size: 16px; }
-    .emotes .em { font-size: 20px; }
   }
 </style>
 </head>
@@ -161,33 +160,35 @@
   This browser has no Web Bluetooth. On iPhone open this page in <b>Bluefy</b>; on Android or desktop use Chrome. The page must be served over HTTPS.
 </div>
 
+<div id="rotate"><div><b>Turn your phone sideways</b><br>Left thumb steers, right thumb drives, the middle sets the speed.</div></div>
+
 <main>
-  <section class="panel drive">
-    <div class="stick" id="stick"><div class="knob" id="knob"></div></div>
+  <section class="panel pad x" id="steer" aria-label="Steering, left and right">
+    <i class="rail"></i><i class="mid"></i>
+    <span class="lbl l">◀ LEFT</span><span class="lbl r">RIGHT ▶</span>
+    <div class="knob"></div>
   </section>
 
-  <section class="panel speed">
-    <output id="speedOut">85%</output>
-    <div class="vs" id="speedSlider"><div class="fill"></div><div class="thumb"></div></div>
-    <label>SPEED</label>
-  </section>
-
-  <section class="panel side">
-    <button class="horn" id="horn">HORN</button>
-    <div class="emotes" id="emotes">
-      <button data-e="1"><span class="em">😊</span>Happy</button>
-      <button data-e="2"><span class="em">😠</span>Angry</button>
-      <button data-e="4"><span class="em">😴</span>Sleep</button>
-      <button data-e="0"><span class="em">🤖</span>Auto</button>
+  <section class="panel speed" id="speedPanel" aria-label="Speed">
+    <div class="sp-head"><label>SPEED</label><output id="speedOut">85%</output></div>
+    <div class="track" id="speedTrack"><div class="fill"></div><div class="thumb"></div></div>
+    <div class="steps">
+      <button class="step" id="speedDown" aria-label="Slower">▼</button>
+      <button class="step" id="speedUp" aria-label="Faster">▲</button>
     </div>
+  </section>
+
+  <section class="panel pad y" id="throttle" aria-label="Throttle, forward and backward">
+    <i class="rail"></i><i class="mid"></i>
+    <span class="lbl t">▲ FORWARD</span><span class="lbl b">BACK ▼</span>
+    <div class="knob"></div>
   </section>
 </main>
 
 <div class="sheet" id="sheet" hidden>
   <div class="card">
     <div class="row"><h2>Settings</h2><button class="primary" id="closeSheet" style="min-width:0">Done</button></div>
-    <div class="hint">The robot moves its eyes and servos by itself: fast driving looks angry, stopping after a drive looks happy, and idle time makes it sleepy. The emote buttons force a mood for a few seconds; Auto hands control back.</div>
-    <label class="row"><span>Show horn button (the buzzer only sounds at start-up otherwise)</span><input type="checkbox" id="hornToggle"></label>
+    <div class="hint">Eyes and ears move by themselves: fast driving looks angry, stopping after a drive looks happy, and idle time makes the robot sleepy.</div>
     <div>
       <div class="row"><span>Servo 1 test</span><output id="s1Out">90°</output></div>
       <input type="range" id="s1" min="0" max="180" value="90">
@@ -213,10 +214,14 @@
   const FFE0 = '0000ffe0-0000-1000-8000-00805f9b34fb';
   const UART_SERVICES = [FFE0, '6e400001-b5a0-f393-e0a9-e50e24dcca9e', '0000fff0-0000-1000-8000-00805f9b34fb'];
   const HEARTBEAT_MS = 250;
-  const TICK_MS = 70;
+  const TICK_MS = 50;        // drive command rate; the write queue keeps only the newest
   const WRITE_GAP_MS = 30;   // the module's UART is only 9600 baud
   const RECONNECT_TRIES = 6;
-  const EMOTE_MS = 6000;     // keep in step with the Arduino sketch
+
+  // Control feel
+  const DEAD = 0.06;         // small dead zone around the centre of each stick, rescaled so there is no jump
+  const STEER_EXPO = 0.35;   // 0 = linear; higher = finer steering near the centre
+  const SPEED_MIN = 20, SPEED_MAX = 100;
 
   const $ = s => document.querySelector(s);
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -230,8 +235,8 @@
 
   // ---------------------------------------------------------------- state
   let device = null, ch = null, userDisc = false, reconnecting = false, wakeLock = null;
-  let jx = 0, jy = 0, horn = 0, speed = store.get('speed', 85);
-  let hornEnabled = store.get('horn', false);   // off by default: the buzzer is for start-up only
+  let steer = 0, throttle = 0;                       // -1..1 from the two sticks
+  let speed = clamp(store.get('speed', 85), SPEED_MIN, SPEED_MAX);
   const keys = new Set();
 
   // ---------------------------------------------------------------- ui helpers
@@ -427,103 +432,91 @@
     else if (ch) keepAwake();
   });
 
-  // ---------------------------------------------------------------- vertical slider
-  const THUMB = 36, EDGE = 3, PAD = THUMB + 2 * EDGE;
-  function vslider(el, { min, max, value, step = 0, onInput = () => {} }) {
-    const thumb = el.querySelector('.thumb'), fill = el.querySelector('.fill');
-    let v = value, pid = null;
+  // ---------------------------------------------------------------- axis pads (one axis each)
+  // Touch anywhere on the pad: the knob follows the finger along its rail and springs back to
+  // the centre on release. Each pad tracks its own finger, so both can be used at once.
+  const KNOB = 64, KPAD = KNOB / 2 + 6;
+  function axisPad(el, axis, onChange) {
+    const knob = el.querySelector('.knob');
+    let pid = null, v = 0;
     const render = () => {
-      const t = (v - min) / (max - min);
-      thumb.style.bottom = `calc((100% - ${PAD}px) * ${t} + ${EDGE}px)`;
-      fill.style.height = `calc((100% - ${PAD}px) * ${t} + ${EDGE + THUMB}px)`;
+      const f = `calc(50% + (50% - ${KPAD}px) * ${axis === 'x' ? v : -v})`;
+      if (axis === 'x') knob.style.left = f; else knob.style.top = f;
     };
     const set = nv => {
-      nv = clamp(nv, min, max);
-      if (step) nv = Math.round(nv / step) * step;
+      nv = clamp(nv, -1, 1);
       if (nv === v) return;
-      v = nv; render(); onInput(v);
+      v = nv; render(); onChange(v);
     };
     const fromEvent = e => {
       const r = el.getBoundingClientRect();
-      const t = clamp((r.bottom - EDGE - THUMB / 2 - e.clientY) / (r.height - PAD), 0, 1);
-      return min + t * (max - min);
+      const span = axis === 'x' ? r.width : r.height;
+      const pos = axis === 'x' ? e.clientX - r.left : e.clientY - r.top;
+      const c = (pos - span / 2) / (span / 2 - KPAD);          // -1..1 around the centre
+      return axis === 'x' ? c : -c;                           // up is positive
     };
+    const release = () => { pid = null; el.classList.remove('active'); set(0); };
     el.addEventListener('pointerdown', e => {
       if (pid !== null) return;
-      pid = e.pointerId; el.setPointerCapture(e.pointerId); set(fromEvent(e));
+      pid = e.pointerId;
+      el.setPointerCapture(e.pointerId);
+      el.classList.add('active');
+      set(fromEvent(e));
     });
     el.addEventListener('pointermove', e => { if (e.pointerId === pid) set(fromEvent(e)); });
     for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) {
-      el.addEventListener(t, e => { if (e.pointerId === pid) pid = null; });
+      el.addEventListener(t, e => { if (e.pointerId === pid) release(); });
     }
     render();
-    return { get value() { return v; }, set };
+    return { get value() { return v; }, release };
   }
 
-  vslider($('#speedSlider'), {
-    min: 20, max: 100, value: speed, step: 5,
-    onInput: v => { speed = v; $('#speedOut').textContent = v + '%'; store.set('speed', v); },
+  const steerPad = axisPad($('#steer'), 'x', v => { steer = v; });
+  const throttlePad = axisPad($('#throttle'), 'y', v => { throttle = v; });
+
+  // ---------------------------------------------------------------- speed slider (centre)
+  // Big target: the whole centre column reacts. Drag, tap anywhere, or use the arrow buttons.
+  const speedPanel = $('#speedPanel'), speedTrack = $('#speedTrack');
+  const TH = 56, TE = 4, TPAD = TH + 2 * TE;
+  const thumb = speedTrack.querySelector('.thumb'), fill = speedTrack.querySelector('.fill');
+  let speedPointer = null;
+
+  function renderSpeed() {
+    const t = (speed - SPEED_MIN) / (SPEED_MAX - SPEED_MIN);
+    thumb.style.bottom = `calc((100% - ${TPAD}px) * ${t} + ${TE}px)`;
+    fill.style.height = `calc((100% - ${TPAD}px) * ${t} + ${TE + TH}px)`;
+    $('#speedOut').textContent = speed + '%';
+  }
+  function setSpeed(v) {
+    v = clamp(Math.round(v), SPEED_MIN, SPEED_MAX);
+    if (v === speed) return;
+    speed = v;
+    renderSpeed();
+    store.set('speed', speed);
+  }
+  function speedFromEvent(e) {
+    const r = speedTrack.getBoundingClientRect();
+    const t = clamp((r.bottom - TE - TH / 2 - e.clientY) / (r.height - TPAD), 0, 1);
+    return SPEED_MIN + t * (SPEED_MAX - SPEED_MIN);
+  }
+  speedPanel.addEventListener('pointerdown', e => {
+    if (e.target.closest('button') || speedPointer !== null) return;
+    speedPointer = e.pointerId;
+    speedPanel.setPointerCapture(e.pointerId);
+    speedPanel.classList.add('active');
+    setSpeed(speedFromEvent(e));
   });
-  $('#speedOut').textContent = speed + '%';
-
-  // ---------------------------------------------------------------- joystick
-  const stick = $('#stick'), knob = $('#knob');
-  let stickPointer = null;
-
-  function moveStick(e) {
-    const r = stick.getBoundingClientRect();
-    const reach = r.width * 0.31;            // stick radius minus knob radius
-    let dx = e.clientX - (r.left + r.width / 2);
-    let dy = e.clientY - (r.top + r.height / 2);
-    const d = Math.hypot(dx, dy);
-    if (d > reach) { dx *= reach / d; dy *= reach / d; }
-    knob.style.transform = `translate(${dx}px, ${dy}px)`;
-    jx = dx / reach;
-    jy = -dy / reach;
-  }
-  function releaseStick() {
-    stickPointer = null; jx = jy = 0;
-    knob.style.transform = '';
-  }
-  stick.addEventListener('pointerdown', e => {
-    if (stickPointer !== null) return;
-    stickPointer = e.pointerId;
-    stick.setPointerCapture(e.pointerId);
-    moveStick(e);
-  });
-  stick.addEventListener('pointermove', e => { if (e.pointerId === stickPointer) moveStick(e); });
+  speedPanel.addEventListener('pointermove', e => { if (e.pointerId === speedPointer) setSpeed(speedFromEvent(e)); });
   for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) {
-    stick.addEventListener(t, e => { if (e.pointerId === stickPointer) releaseStick(); });
+    speedPanel.addEventListener(t, e => {
+      if (e.pointerId !== speedPointer) return;
+      speedPointer = null;
+      speedPanel.classList.remove('active');
+    });
   }
-
-  // ---------------------------------------------------------------- horn
-  const hornBtn = $('#horn');
-  function setHorn(v) { horn = hornEnabled ? v : 0; hornBtn.classList.toggle('on', !!horn); }
-  hornBtn.hidden = !hornEnabled;
-  $('#hornToggle').checked = hornEnabled;
-  $('#hornToggle').onchange = e => {
-    hornEnabled = e.target.checked;
-    store.set('horn', hornEnabled);
-    hornBtn.hidden = !hornEnabled;
-    setHorn(0);
-  };
-  hornBtn.addEventListener('pointerdown', e => { hornBtn.setPointerCapture(e.pointerId); setHorn(1); });
-  for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) {
-    hornBtn.addEventListener(t, () => setHorn(0));
-  }
-  hornBtn.addEventListener('contextmenu', e => e.preventDefault());
-
-  // ---------------------------------------------------------------- emotes
-  // The robot picks moods by itself; these force one for a few seconds. 0 = back to auto.
-  const emoteBtns = [...document.querySelectorAll('#emotes button')];
-  let emoteTimer = null;
-  emoteBtns.forEach(b => b.onclick = () => {
-    const e = +b.dataset.e;
-    send('E' + e, 'E');
-    clearTimeout(emoteTimer);
-    emoteBtns.forEach(x => x.setAttribute('aria-pressed', e !== 0 && x === b));
-    if (e !== 0) emoteTimer = setTimeout(() => emoteBtns.forEach(x => x.setAttribute('aria-pressed', false)), EMOTE_MS);
-  });
+  $('#speedUp').onclick = () => setSpeed(speed + 5);
+  $('#speedDown').onclick = () => setSpeed(speed - 5);
+  renderSpeed();
 
   // ---------------------------------------------------------------- settings
   const sheet = $('#sheet');
@@ -542,36 +535,41 @@
   // ---------------------------------------------------------------- keyboard (desktop testing)
   const KEYMAP = { arrowup: 'u', w: 'u', arrowdown: 'd', s: 'd', arrowleft: 'l', a: 'l', arrowright: 'r', d: 'r' };
   addEventListener('keydown', e => {
-    if (e.code === 'Space') { setHorn(1); e.preventDefault(); return; }
     const k = KEYMAP[e.key.toLowerCase()];
     if (k) { keys.add(k); e.preventDefault(); }
   });
-  addEventListener('keyup', e => {
-    if (e.code === 'Space') { setHorn(0); return; }
-    keys.delete(KEYMAP[e.key.toLowerCase()]);
-  });
-  function resetInputs() { keys.clear(); releaseStick(); setHorn(0); }
+  addEventListener('keyup', e => keys.delete(KEYMAP[e.key.toLowerCase()]));
+  function resetInputs() { keys.clear(); steerPad.release(); throttlePad.release(); }
   addEventListener('blur', resetInputs);
+  document.addEventListener('gesturestart', e => e.preventDefault());   // no pinch-zoom while driving
 
   // ---------------------------------------------------------------- drive loop
-  // Arcade mix: left = y + x, right = y - x, scaled so neither side exceeds 1.
+  // Dead zone with rescaling (no jump at its edge), optional expo, then the arcade mix:
+  // left = throttle + steer, right = throttle - steer, scaled so neither side exceeds 1.
+  function shape(v, expo) {
+    const a = Math.abs(v);
+    if (a < DEAD) return 0;
+    const t = (a - DEAD) / (1 - DEAD);
+    return Math.sign(v) * ((1 - expo) * t + expo * t * t * t);
+  }
+
   function wheels() {
     const kx = (keys.has('r') ? 1 : 0) - (keys.has('l') ? 1 : 0);
     const ky = (keys.has('u') ? 1 : 0) - (keys.has('d') ? 1 : 0);
-    let x = clamp(jx + kx, -1, 1), y = clamp(jy + ky, -1, 1);
-    if (Math.hypot(x, y) < 0.08) x = y = 0;
+    const x = shape(clamp(steer + kx, -1, 1), STEER_EXPO);
+    const y = shape(clamp(throttle + ky, -1, 1), 0);
     const l = y + x, r = y - x;
     const m = Math.max(1, Math.abs(l), Math.abs(r));
     const k = 255 * speed / 100 / m;
     return { l: Math.round(l * k), r: Math.round(r * k) };
   }
 
-  // Also the heartbeat: the robot brakes if it hears nothing for ~0.7 s.
+  // Also the heartbeat: the robot stops if it hears nothing for ~0.7 s.
   let lastSent = '', lastSentAt = 0;
   setInterval(() => {
     if (!ch) return;
     const { l, r } = wheels();
-    const msg = `M${l},${r},${horn}`;
+    const msg = `M${l},${r},0`;
     const now = performance.now();
     if (msg !== lastSent || now - lastSentAt > HEARTBEAT_MS) {
       lastSent = msg; lastSentAt = now;
@@ -580,7 +578,7 @@
   }, TICK_MS);
 
   // ---------------------------------------------------------------- boot
-  const VERSION = 'v7';
+  const VERSION = 'v8';
   $('#ver').textContent = VERSION;
   log('page ' + VERSION);
   if (!navigator.bluetooth || !isSecureContext) $('#banner').hidden = false;
