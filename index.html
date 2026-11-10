@@ -118,6 +118,16 @@
   .track .thumb { position: absolute; left: 4px; right: 4px; height: 56px; border-radius: 28px; background: var(--accent); box-shadow: 0 3px 10px rgba(0, 0, 0, .4); }
   .speed.active { border-color: var(--accent); }
 
+  /* big "Connect" cover shown until the robot is connected */
+  main { position: relative; }
+  .overlay { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; background: rgba(10, 14, 19, .82); border-radius: 18px; }
+  .overlay .big { min-height: 76px; font-size: 20px; padding: 0 36px; }
+  .overlay small { display: block; margin-top: 12px; text-align: center; color: var(--mute); font-size: 12px; }
+
+  input[type=text] { width: 100%; min-height: 40px; padding: 0 12px; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 10px; -webkit-user-select: text; user-select: text; }
+  input[type=checkbox] { width: 26px; height: 26px; margin: 0; accent-color: var(--accent); }
+  label.row { cursor: pointer; }
+
   #rotate { display: none; flex: 1; place-items: center; text-align: center; padding: 24px; color: var(--mute); }
 
   /* settings sheet */
@@ -163,6 +173,13 @@
 <div id="rotate"><div><b>Turn your phone sideways</b><br>Left thumb steers, right thumb drives, the middle sets the speed.</div></div>
 
 <main>
+  <div class="overlay" id="connectOverlay">
+    <div>
+      <button class="primary big" id="bigConnect">Connect to <span id="robotLabel"></span></button>
+      <small id="overlayHint"></small>
+    </div>
+  </div>
+
   <section class="panel pad x" id="steer" aria-label="Steering, left and right">
     <i class="rail"></i><i class="mid"></i>
     <span class="lbl l">◀ LEFT</span><span class="lbl r">RIGHT ▶</span>
@@ -189,6 +206,12 @@
   <div class="card">
     <div class="row"><h2>Settings</h2><button class="primary" id="closeSheet" style="min-width:0">Done</button></div>
     <div class="hint">Eyes and ears move by themselves: fast driving looks angry, stopping after a drive looks happy, and idle time makes the robot sleepy.</div>
+    <div>
+      <div class="row"><span>Robot name</span></div>
+      <input type="text" id="robotName" maxlength="12" autocapitalize="off" autocomplete="off" spellcheck="false">
+      <label class="row"><span>Show all Bluetooth devices</span><input type="checkbox" id="showAll"></label>
+      <div class="hint">The list only shows devices whose name starts with this. It must match the name given to the module by the ble_rename sketch.</div>
+    </div>
     <div>
       <div class="row"><span>Servo 1 test</span><output id="s1Out">90°</output></div>
       <input type="range" id="s1" min="0" max="180" value="90">
@@ -223,6 +246,10 @@
   const STEER_EXPO = 0.35;   // 0 = linear; higher = finer steering near the centre
   const SPEED_MIN = 20, SPEED_MAX = 100;
 
+  // The Bluetooth module's name. Give it this name with the ble_rename sketch. You can also
+  // change it in Settings, or open the page once with ?robot=YOURNAME at the end of the link.
+  const DEFAULT_ROBOT_NAME = 'OTABEK-BOT';
+
   const $ = s => document.querySelector(s);
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -235,6 +262,10 @@
 
   // ---------------------------------------------------------------- state
   let device = null, ch = null, userDisc = false, reconnecting = false, wakeLock = null;
+  const urlName = new URLSearchParams(location.search).get('robot');
+  if (urlName) store.set('robot', urlName.slice(0, 12));
+  let robotName = String(store.get('robot', DEFAULT_ROBOT_NAME) || '').trim();
+  let showAll = !!store.get('showAll', false);
   let steer = 0, throttle = 0;                       // -1..1 from the two sticks
   let speed = clamp(store.get('speed', 85), SPEED_MIN, SPEED_MAX);
   const keys = new Set();
@@ -252,6 +283,12 @@
   }
   function setButton() {
     $('#connect').textContent = reconnecting ? 'Cancel' : ch ? 'Disconnect' : device ? 'Reconnect' : 'Connect';
+    $('#connectOverlay').hidden = !!(ch || reconnecting);
+  }
+  function renderRobotUi() {
+    const filtered = robotName && !showAll;
+    $('#robotLabel').textContent = filtered ? robotName : 'your robot';
+    $('#overlayHint').textContent = filtered ? `Only devices named "${robotName}…" are listed` : 'All Bluetooth devices are listed';
   }
 
   // ---------------------------------------------------------------- write queue
@@ -321,17 +358,25 @@
     throw new Error('Connected, but this device has no UART service. Is it the right module?');
   }
 
-  const SCANS = [
-    ['all devices, all UART services', { acceptAllDevices: true, optionalServices: UART_SERVICES }],
-    ['all devices, FFE0 only',         { acceptAllDevices: true, optionalServices: [FFE0] }],
-    ['devices advertising FFE0',       { filters: [{ services: [FFE0] }] }],
-    ['all devices, numeric FFE0',      { acceptAllDevices: true, optionalServices: [0xFFE0] }],
-  ];
+  // Scan styles, most specific first. With a robot name set, the first two only list devices whose
+  // name starts with it, so your robot is the only entry among hundreds.
+  function scanStyles() {
+    const styles = [];
+    if (robotName && !showAll) {
+      styles.push([`only "${robotName}…", all UART services`, { filters: [{ namePrefix: robotName }], optionalServices: UART_SERVICES }]);
+      styles.push([`only "${robotName}…", FFE0 only`,        { filters: [{ namePrefix: robotName }], optionalServices: [FFE0] }]);
+    }
+    styles.push(['all devices, all UART services', { acceptAllDevices: true, optionalServices: UART_SERVICES }]);
+    styles.push(['all devices, FFE0 only',         { acceptAllDevices: true, optionalServices: [FFE0] }]);
+    styles.push(['devices advertising FFE0',       { filters: [{ services: [FFE0] }] }]);
+    styles.push(['all devices, numeric FFE0',      { acceptAllDevices: true, optionalServices: [0xFFE0] }]);
+    return styles;
+  }
 
-  // If the browser rejects the scan instantly it is a settings problem, so try the next
-  // style. A slow rejection means the person closed the list, so stop.
+  // A browser that rejects a scan instantly has a settings problem, so try the next style.
+  // A slow rejection means the person closed the list (or nothing matched), so stop.
   async function chooseDevice() {
-    for (const [label, opts] of SCANS) {
+    for (const [label, opts] of scanStyles()) {
       const t0 = performance.now();
       log('scan: ' + label);
       try {
@@ -339,7 +384,12 @@
       } catch (e) {
         const ms = Math.round(performance.now() - t0);
         log(`  rejected after ${ms} ms: ${describe(e)}`);
-        if (ms > 800) throw e;
+        if (ms > 800) {
+          if (opts.filters && opts.filters[0].namePrefix) {
+            throw new Error(`"${robotName}" not found. Is the robot on? (Settings: Show all devices)`);
+          }
+          throw e;
+        }
       }
     }
     throw new Error('The browser rejected every scan style');
@@ -357,7 +407,7 @@
       await openLink();
       onConnected();
     } catch (e) {
-      const msg = describe(e);
+      const msg = describe(e).replace(/^Error: /, '');
       const cancelled = /cancel|chosen|dismiss/i.test(msg);
       log('error: ' + msg);
       if (device) {
@@ -423,6 +473,33 @@
     }
     setButton();
   };
+
+  // Where the browser remembers devices from an earlier visit (getDevices), reconnect to the robot
+  // by itself on page load, with no list at all. Otherwise this does nothing and Connect is used.
+  async function tryRemembered() {
+    if (ch || device || reconnecting) return;
+    if (!navigator.bluetooth || !navigator.bluetooth.getDevices) { log('auto-connect: not supported here, tap Connect'); return; }
+    try {
+      const devs = await navigator.bluetooth.getDevices();
+      const want = robotName.toLowerCase();
+      const mine = devs.find(d => want && d.name && d.name.toLowerCase().startsWith(want));
+      if (!mine) { log(`auto-connect: no remembered "${robotName}" (${devs.length} remembered), tap Connect`); return; }
+      device = mine;
+      device.addEventListener('gattserverdisconnected', onDisconnected);
+      setStatus('busy', 'Connecting to ' + mine.name + '…');
+      await openLink();
+      onConnected();
+    } catch (e) {
+      log('auto-connect failed: ' + describe(e));
+      if (device) {
+        device.removeEventListener('gattserverdisconnected', onDisconnected);
+        try { device.gatt.disconnect(); } catch (_) {}
+      }
+      device = null; ch = null;
+      setStatus('off', 'Not connected');
+      setButton();
+    }
+  }
 
   async function keepAwake() {
     try { wakeLock = await navigator.wakeLock.request('screen'); } catch (_) {}
@@ -524,6 +601,12 @@
   $('#closeSheet').onclick = () => { sheet.hidden = true; };
   sheet.addEventListener('pointerdown', e => { if (e.target === sheet) sheet.hidden = true; });
 
+  $('#robotName').value = robotName;
+  $('#showAll').checked = showAll;
+  $('#robotName').onchange = e => { robotName = e.target.value.trim(); store.set('robot', robotName); renderRobotUi(); };
+  $('#showAll').onchange = e => { showAll = e.target.checked; store.set('showAll', showAll); renderRobotUi(); };
+  $('#bigConnect').onclick = () => $('#connect').click();
+
   [['s1', 'A'], ['s2', 'B']].forEach(([id, cmd]) => {
     const el = $('#' + id);
     el.addEventListener('input', () => {
@@ -578,11 +661,14 @@
   }, TICK_MS);
 
   // ---------------------------------------------------------------- boot
-  const VERSION = 'v8';
+  const VERSION = 'v9';
   $('#ver').textContent = VERSION;
-  log('page ' + VERSION);
+  log('page ' + VERSION + ', robot name "' + robotName + '"' + (showAll ? ', showing all devices' : ''));
   if (!navigator.bluetooth || !isSecureContext) $('#banner').hidden = false;
+  renderRobotUi();
   setButton();
+  window.rfAutoConnect = tryRemembered;      // also callable from the console for testing
+  setTimeout(tryRemembered, 400);
 })();
 </script>
 </body>
