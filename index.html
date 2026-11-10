@@ -248,7 +248,7 @@
 
   // The Bluetooth module's name. Give it this name with the ble_rename sketch. You can also
   // change it in Settings, or open the page once with ?robot=YOURNAME at the end of the link.
-  const DEFAULT_ROBOT_NAME = 'OTABEK-BOT';
+  const DEFAULT_ROBOT_NAME = 'MyRobotBT';
 
   const $ = s => document.querySelector(s);
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -661,7 +661,7 @@
   }, TICK_MS);
 
   // ---------------------------------------------------------------- boot
-  const VERSION = 'v9';
+  const VERSION = 'v10';
   $('#ver').textContent = VERSION;
   log('page ' + VERSION + ', robot name "' + robotName + '"' + (showAll ? ', showing all devices' : ''));
   if (!navigator.bluetooth || !isSecureContext) $('#banner').hidden = false;
